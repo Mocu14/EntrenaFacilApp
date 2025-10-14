@@ -33,12 +33,30 @@
             android:inputType="number"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
+
         <Spinner
             android:id="@+id/spinnerDia"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"/>
 
+        <!-- NUEVO: ImageView para mostrar la foto de la rutina -->
+        <ImageView
+            android:id="@+id/ivFotoRutina"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:scaleType="centerCrop"
+            android:layout_marginTop="12dp"
+            android:background="@android:color/darker_gray"
+            android:contentDescription="Foto de la rutina" />
+
+        <!-- NUEVO: Botón para seleccionar foto -->
+        <Button
+            android:id="@+id/btnSeleccionarFoto"
+            android:text="Seleccionar Foto"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" />
 
         <Button
             android:id="@+id/btnGuardar"

@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class DBHelper extends SQLiteOpenHelper {
 
     public static final String DB_NAME = "entrenafacil.db";
-    public static final int DB_VERSION = 2;
+    public static final int DB_VERSION = 3; // Nueva versión
 
     public DBHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -26,7 +26,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "sexo TEXT, " +
                 "foto_perfil TEXT)");
 
-        // Rutinas
+        // Rutinas (añadimos campo foto_rutina)
         db.execSQL("CREATE TABLE rutinas (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "usuario_id INTEGER, " +
@@ -35,6 +35,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "tipo TEXT, " +
                 "duracion INTEGER, " +
                 "dia_semana TEXT, " +
+                "foto_rutina TEXT, " + // NUEVO CAMPO
                 "FOREIGN KEY(usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE)");
 
         // Progreso
@@ -47,10 +48,10 @@ public class DBHelper extends SQLiteOpenHelper {
                 "FOREIGN KEY(rutina_id) REFERENCES rutinas(id) ON DELETE CASCADE)");
     }
 
-
     @Override
-    public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
-
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if (oldVersion < 3) {
+            db.execSQL("ALTER TABLE rutinas ADD COLUMN foto_rutina TEXT");
+        }
     }
-
 }

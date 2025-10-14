@@ -34,15 +34,19 @@ public class DBHelper extends SQLiteOpenHelper {
                 "descripcion TEXT, " +
                 "tipo TEXT, " +
                 "duracion INTEGER, " +
-                "dia_semana TEXT)");
+                "dia_semana TEXT, " +
+                "FOREIGN KEY(usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE)");
 
         // Progreso
         db.execSQL("CREATE TABLE progreso (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "usuario_id INTEGER, " +
                 "rutina_id INTEGER, " +
-                "fecha TEXT)");
+                "fecha TEXT, " +
+                "FOREIGN KEY(usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE, " +
+                "FOREIGN KEY(rutina_id) REFERENCES rutinas(id) ON DELETE CASCADE)");
     }
+
 
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {

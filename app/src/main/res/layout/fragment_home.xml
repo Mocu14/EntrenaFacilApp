@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Spinner para filtro -->
+    <Spinner
+        android:id="@+id/spinnerFiltro"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Botón para agregar rutina -->
+    <Button
+        android:id="@+id/btnAgregarRutina"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Crear nueva rutina"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Lista de rutinas -->
+    <ListView
+        android:id="@+id/listViewRutinas"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:dividerHeight="8dp"/>
+</LinearLayout>

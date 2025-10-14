@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="24dp">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- LOGO -->
+        <ImageView
+            android:src="@drawable/entrenafacillogo"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:contentDescription="Logo"
+            android:layout_marginBottom="16dp" />
+
+        <!-- TÍTULO -->
+        <TextView
+            android:text="¡Bienvenid@ a EntrenaFácil!"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="24dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <!-- USUARIO -->
+        <EditText
+            android:id="@+id/etUsuario"
+            android:hint="Usuario"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text" />
+
+        <!-- CONTRASEÑA -->
+        <EditText
+            android:id="@+id/etContrasena"
+            android:hint="Contraseña"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPassword"
+            android:layout_marginTop="12dp" />
+
+        <!-- BOTÓN -->
+        <Button
+            android:id="@+id/btnLogin"
+            android:text="Iniciar sesión"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp" />
+        <Button
+            android:id="@+id/btnIrRegistro"
+            android:text="Registrarse"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" />
+
+    </LinearLayout>
+</ScrollView>

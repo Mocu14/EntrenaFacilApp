@@ -40,7 +40,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"/>
 
-        <!-- NUEVO: ImageView para mostrar la foto de la rutina -->
+
         <ImageView
             android:id="@+id/ivFotoRutina"
             android:layout_width="match_parent"
@@ -50,10 +50,10 @@
             android:background="@android:color/darker_gray"
             android:contentDescription="Foto de la rutina" />
 
-        <!-- NUEVO: Botón para seleccionar foto -->
+
         <Button
             android:id="@+id/btnSeleccionarFoto"
-            android:text="Seleccionar Foto"
+            android:text="Seleccionar Fotos"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp" />

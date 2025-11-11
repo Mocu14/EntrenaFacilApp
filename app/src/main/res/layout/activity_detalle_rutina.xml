@@ -9,17 +9,25 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <!-- Foto de la rutina -->
-        <ImageView
-            android:id="@+id/ivFotoRutina"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:scaleType="centerCrop"
-            android:background="@android:color/darker_gray"
-            android:contentDescription="Foto de la rutina"
-            android:layout_marginBottom="16dp"/>
 
-        <!-- TextViews de la rutina -->
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/viewPagerFotos"
+            android:layout_width="match_parent"
+            android:layout_height="250dp"
+            android:layout_marginBottom="8dp"
+            android:clipToPadding="false"
+            android:clipChildren="false"
+            android:overScrollMode="never" />
+
+
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tabLayoutIndicadores"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="16dp" />
+
+
         <TextView
             android:id="@+id/tvNombre"
             android:text="Nombre"
@@ -56,7 +64,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp" />
 
-        <!-- Botones actualizados -->
+
         <Button
             android:id="@+id/btnEditar"
             android:text="Editar Rutina"
@@ -77,5 +85,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"/>
+
     </LinearLayout>
 </ScrollView>

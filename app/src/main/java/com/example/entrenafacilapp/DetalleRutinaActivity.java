@@ -4,25 +4,24 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.viewpager2.widget.ViewPager2;
 
-import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 public class DetalleRutinaActivity extends AppCompatActivity {
 
     TextView tvNombre, tvDescripcion, tvTipo, tvDuracion, tvDia;
-    ImageView ivFotoRutina;
+    ViewPager2 viewPagerFotos;
     Button btnEditar, btnEliminar, btnCompletar;
 
     DBHelper dbHelper;
@@ -35,18 +34,18 @@ public class DetalleRutinaActivity extends AppCompatActivity {
 
         dbHelper = new DBHelper(this);
 
+        // Referencias UI
         tvNombre = findViewById(R.id.tvNombre);
         tvDescripcion = findViewById(R.id.tvDescripcion);
         tvTipo = findViewById(R.id.tvTipo);
         tvDuracion = findViewById(R.id.tvDuracion);
         tvDia = findViewById(R.id.tvDia);
-        ivFotoRutina = findViewById(R.id.ivFotoRutina);
+        viewPagerFotos = findViewById(R.id.viewPagerFotos);
         btnEditar = findViewById(R.id.btnEditar);
         btnEliminar = findViewById(R.id.btnEliminar);
         btnCompletar = findViewById(R.id.btnCompletar);
 
         rutinaId = getIntent().getIntExtra("rutina_id", -1);
-
         if (rutinaId != -1) {
             cargarDatosRutina(rutinaId);
         }
@@ -94,7 +93,7 @@ public class DetalleRutinaActivity extends AppCompatActivity {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
 
         Cursor cursor = db.rawQuery(
-                "SELECT nombre, descripcion, tipo, duracion, dia_semana, foto_rutina FROM rutinas WHERE id = ?",
+                "SELECT nombre, descripcion, tipo, duracion, dia_semana, fotos_rutina FROM rutinas WHERE id = ?",
                 new String[]{String.valueOf(id)}
         );
 
@@ -105,13 +104,11 @@ public class DetalleRutinaActivity extends AppCompatActivity {
             tvDuracion.setText(cursor.getInt(3) + " min");
             tvDia.setText(cursor.getString(4));
 
-            String rutaFoto = cursor.getString(5);
-            if (rutaFoto != null) {
-                File imgFile = new File(rutaFoto);
-                if (imgFile.exists()) {
-                    Bitmap bitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
-                    ivFotoRutina.setImageBitmap(bitmap);
-                }
+            // Soporte para varias fotos separadas por comas
+            String fotos = cursor.getString(5);
+            if (!TextUtils.isEmpty(fotos)) {
+                List<String> listaRutas = Arrays.asList(fotos.split(","));
+                viewPagerFotos.setAdapter(new FotosRutinaAdapter(this, listaRutas));
             }
         }
 

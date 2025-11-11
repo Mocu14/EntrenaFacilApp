@@ -4,9 +4,9 @@ import android.content.ContentValues;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -22,27 +22,29 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AddRutinaActivity extends AppCompatActivity {
 
     EditText etNombre, etDescripcion, etTipo, etDuracion;
     Spinner spinnerDia;
     Button btnGuardar, btnSeleccionarFoto;
-    ImageView ivFotoRutina;
+    ImageView ivFotoPreview;
 
     DBHelper dbHelper;
-
-    int rutinaId = -1;
-    boolean modoEdicion = false;
     int usuarioId;
+    boolean modoEdicion = false;
+    int rutinaId = -1;
 
-    Uri fotoUri = null;
+    List<Uri> fotosSeleccionadas = new ArrayList<>();
 
-    private final ActivityResultLauncher<String> seleccionarFotoLauncher =
-            registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
-                if (uri != null) {
-                    fotoUri = uri;
-                    ivFotoRutina.setImageURI(fotoUri);
+    private final ActivityResultLauncher<String[]> seleccionarMultiplesFotos =
+            registerForActivityResult(new ActivityResultContracts.OpenMultipleDocuments(), uris -> {
+                if (uris != null && !uris.isEmpty()) {
+                    fotosSeleccionadas.clear();
+                    fotosSeleccionadas.addAll(uris);
+                    ivFotoPreview.setImageURI(fotosSeleccionadas.get(0));
                 }
             });
 
@@ -52,7 +54,6 @@ public class AddRutinaActivity extends AppCompatActivity {
         setContentView(R.layout.activity_add_rutina);
 
         dbHelper = new DBHelper(this);
-
         SharedPreferences prefs = getSharedPreferences("sesion", MODE_PRIVATE);
         usuarioId = prefs.getInt("usuario_id", -1);
 
@@ -63,50 +64,24 @@ public class AddRutinaActivity extends AppCompatActivity {
         spinnerDia = findViewById(R.id.spinnerDia);
         btnGuardar = findViewById(R.id.btnGuardar);
         btnSeleccionarFoto = findViewById(R.id.btnSeleccionarFoto);
-        ivFotoRutina = findViewById(R.id.ivFotoRutina);
+        ivFotoPreview = findViewById(R.id.ivFotoRutina);
 
-        String[] dias = {"Todos los días", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, dias);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item,
+                new String[]{"Todos los días", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"});
         spinnerDia.setAdapter(adapter);
 
         modoEdicion = getIntent().getBooleanExtra("modo_edicion", false);
         if (modoEdicion) {
             rutinaId = getIntent().getIntExtra("rutina_id", -1);
-            cargarDatosRutina(rutinaId);
-        }
-
-        btnGuardar.setOnClickListener(view -> guardarRutina());
-        btnSeleccionarFoto.setOnClickListener(v -> seleccionarFotoLauncher.launch("image/*"));
-    }
-
-    private void cargarDatosRutina(int id) {
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT nombre, descripcion, tipo, duracion, dia_semana, foto_rutina FROM rutinas WHERE id = ?", new String[]{String.valueOf(id)});
-
-        if (cursor.moveToFirst()) {
-            etNombre.setText(cursor.getString(0));
-            etDescripcion.setText(cursor.getString(1));
-            etTipo.setText(cursor.getString(2));
-            etDuracion.setText(String.valueOf(cursor.getInt(3)));
-
-            String dia = cursor.getString(4);
-            for (int i = 0; i < spinnerDia.getCount(); i++) {
-                if (spinnerDia.getItemAtPosition(i).toString().equalsIgnoreCase(dia)) {
-                    spinnerDia.setSelection(i);
-                    break;
-                }
-            }
-
-            String rutaFoto = cursor.getString(5);
-            if (rutaFoto != null) {
-                File imgFile = new File(rutaFoto);
-                if (imgFile.exists()) {
-                    ivFotoRutina.setImageBitmap(android.graphics.BitmapFactory.decodeFile(imgFile.getAbsolutePath()));
-                }
+            if (rutinaId != -1) {
+                cargarDatosRutina(rutinaId);
+                btnGuardar.setText("Actualizar rutina");
             }
         }
-        cursor.close();
+
+        btnSeleccionarFoto.setOnClickListener(v -> seleccionarMultiplesFotos.launch(new String[]{"image/*"}));
+        btnGuardar.setOnClickListener(v -> guardarRutina());
     }
 
     private void guardarRutina() {
@@ -118,7 +93,7 @@ public class AddRutinaActivity extends AppCompatActivity {
 
         try {
             duracion = Integer.parseInt(etDuracion.getText().toString().trim());
-        } catch (NumberFormatException e) {
+        } catch (Exception e) {
             Toast.makeText(this, "Duración inválida", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -137,30 +112,54 @@ public class AddRutinaActivity extends AppCompatActivity {
         values.put("duracion", duracion);
         values.put("dia_semana", dia);
 
-        if (fotoUri != null) {
-            String rutaInterna = guardarImagenInterna(fotoUri);
-            if (rutaInterna != null) {
-                values.put("foto_rutina", rutaInterna);
-            }
+        List<String> rutasGuardadas = new ArrayList<>();
+        for (Uri uri : fotosSeleccionadas) {
+            String ruta = guardarImagenInterna(uri);
+            if (ruta != null) rutasGuardadas.add(ruta);
+        }
+
+        if (!rutasGuardadas.isEmpty()) {
+            values.put("fotos_rutina", TextUtils.join(",", rutasGuardadas));
         }
 
         if (modoEdicion) {
-            int filas = db.update("rutinas", values, "id = ?", new String[]{String.valueOf(rutinaId)});
-            if (filas > 0) {
-                Toast.makeText(this, "Rutina actualizada", Toast.LENGTH_SHORT).show();
-                finish();
-            } else {
-                Toast.makeText(this, "Error al actualizar", Toast.LENGTH_SHORT).show();
-            }
+            db.update("rutinas", values, "id=?", new String[]{String.valueOf(rutinaId)});
+            Toast.makeText(this, "Rutina actualizada", Toast.LENGTH_SHORT).show();
         } else {
-            long result = db.insert("rutinas", null, values);
-            if (result != -1) {
-                Toast.makeText(this, "Rutina guardada", Toast.LENGTH_SHORT).show();
-                finish();
-            } else {
-                Toast.makeText(this, "Error al guardar", Toast.LENGTH_SHORT).show();
+            db.insert("rutinas", null, values);
+            Toast.makeText(this, "Rutina guardada", Toast.LENGTH_SHORT).show();
+        }
+
+        finish();
+    }
+
+    private void cargarDatosRutina(int rutinaId) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.rawQuery(
+                "SELECT nombre, descripcion, tipo, duracion, dia_semana, fotos_rutina FROM rutinas WHERE id = ?",
+                new String[]{String.valueOf(rutinaId)}
+        );
+
+        if (cursor.moveToFirst()) {
+            etNombre.setText(cursor.getString(0));
+            etDescripcion.setText(cursor.getString(1));
+            etTipo.setText(cursor.getString(2));
+            etDuracion.setText(String.valueOf(cursor.getInt(3)));
+
+            String dia = cursor.getString(4);
+            ArrayAdapter adapter = (ArrayAdapter) spinnerDia.getAdapter();
+            int pos = adapter.getPosition(dia);
+            spinnerDia.setSelection(pos);
+
+            String fotos = cursor.getString(5);
+            if (!TextUtils.isEmpty(fotos)) {
+                String[] rutas = fotos.split(",");
+                if (rutas.length > 0) {
+                    ivFotoPreview.setImageURI(Uri.fromFile(new File(rutas[0])));
+                }
             }
         }
+        cursor.close();
     }
 
     private String guardarImagenInterna(Uri uri) {
@@ -176,9 +175,8 @@ public class AddRutinaActivity extends AppCompatActivity {
                 outputStream.write(buffer, 0, length);
             }
 
-            outputStream.close();
             inputStream.close();
-
+            outputStream.close();
             return archivo.getAbsolutePath();
         } catch (Exception e) {
             e.printStackTrace();

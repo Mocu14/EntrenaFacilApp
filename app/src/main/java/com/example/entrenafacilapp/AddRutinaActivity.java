@@ -1,5 +1,6 @@
 package com.example.entrenafacilapp;
 
+import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -7,11 +8,10 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -27,26 +27,38 @@ import java.util.List;
 
 public class AddRutinaActivity extends AppCompatActivity {
 
-    EditText etNombre, etDescripcion, etTipo, etDuracion;
-    Spinner spinnerDia;
-    Button btnGuardar, btnSeleccionarFoto;
-    ImageView ivFotoPreview;
+    // UI
+    private EditText etNombre, etDescripcion, etTipo, etDuracion;
+    private TextView tvDiasSeleccionados;
+    private Button btnGuardar, btnSeleccionarFoto;
+    private ImageView ivFotoPreview;
 
-    DBHelper dbHelper;
-    int usuarioId;
-    boolean modoEdicion = false;
-    int rutinaId = -1;
+    // Días
+    private final String[] diasSemana = {
+            "Lunes", "Martes", "Miércoles",
+            "Jueves", "Viernes", "Sábado", "Domingo"
+    };
+    private final boolean[] diasSeleccionados = new boolean[7];
 
-    List<Uri> fotosSeleccionadas = new ArrayList<>();
+    // Datos
+    private DBHelper dbHelper;
+    private int usuarioId;
+    private boolean modoEdicion = false;
+    private int rutinaId = -1;
+
+    private final List<Uri> fotosSeleccionadas = new ArrayList<>();
 
     private final ActivityResultLauncher<String[]> seleccionarMultiplesFotos =
-            registerForActivityResult(new ActivityResultContracts.OpenMultipleDocuments(), uris -> {
-                if (uris != null && !uris.isEmpty()) {
-                    fotosSeleccionadas.clear();
-                    fotosSeleccionadas.addAll(uris);
-                    ivFotoPreview.setImageURI(fotosSeleccionadas.get(0));
-                }
-            });
+            registerForActivityResult(
+                    new ActivityResultContracts.OpenMultipleDocuments(),
+                    uris -> {
+                        if (uris != null && !uris.isEmpty()) {
+                            fotosSeleccionadas.clear();
+                            fotosSeleccionadas.addAll(uris);
+                            ivFotoPreview.setImageURI(fotosSeleccionadas.get(0));
+                        }
+                    }
+            );
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,15 +73,12 @@ public class AddRutinaActivity extends AppCompatActivity {
         etDescripcion = findViewById(R.id.etDescripcion);
         etTipo = findViewById(R.id.etTipo);
         etDuracion = findViewById(R.id.etDuracion);
-        spinnerDia = findViewById(R.id.spinnerDia);
+        tvDiasSeleccionados = findViewById(R.id.tvDiasSeleccionados);
         btnGuardar = findViewById(R.id.btnGuardar);
         btnSeleccionarFoto = findViewById(R.id.btnSeleccionarFoto);
         ivFotoPreview = findViewById(R.id.ivFotoRutina);
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item,
-                new String[]{"Todos los días", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"});
-        spinnerDia.setAdapter(adapter);
+        tvDiasSeleccionados.setOnClickListener(v -> mostrarDialogoDias());
 
         modoEdicion = getIntent().getBooleanExtra("modo_edicion", false);
         if (modoEdicion) {
@@ -80,17 +89,49 @@ public class AddRutinaActivity extends AppCompatActivity {
             }
         }
 
-        btnSeleccionarFoto.setOnClickListener(v -> seleccionarMultiplesFotos.launch(new String[]{"image/*"}));
+        btnSeleccionarFoto.setOnClickListener(
+                v -> seleccionarMultiplesFotos.launch(new String[]{"image/*"})
+        );
+
         btnGuardar.setOnClickListener(v -> guardarRutina());
+    }
+
+    private void mostrarDialogoDias() {
+        new AlertDialog.Builder(this)
+                .setTitle("Selecciona los días")
+                .setMultiChoiceItems(diasSemana, diasSeleccionados,
+                        (dialog, which, isChecked) ->
+                                diasSeleccionados[which] = isChecked
+                )
+                .setPositiveButton("Aceptar", (dialog, which) -> actualizarTextoDias())
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void actualizarTextoDias() {
+        List<String> seleccionados = new ArrayList<>();
+
+        for (int i = 0; i < diasSemana.length; i++) {
+            if (diasSeleccionados[i]) {
+                seleccionados.add(diasSemana[i]);
+            }
+        }
+
+        if (seleccionados.size() == 7) {
+            tvDiasSeleccionados.setText("Todos los días");
+        } else if (seleccionados.isEmpty()) {
+            tvDiasSeleccionados.setText("Seleccionar días");
+        } else {
+            tvDiasSeleccionados.setText(TextUtils.join(", ", seleccionados));
+        }
     }
 
     private void guardarRutina() {
         String nombre = etNombre.getText().toString().trim();
         String descripcion = etDescripcion.getText().toString().trim();
         String tipo = etTipo.getText().toString().trim();
-        String dia = spinnerDia.getSelectedItem().toString();
-        int duracion;
 
+        int duracion;
         try {
             duracion = Integer.parseInt(etDuracion.getText().toString().trim());
         } catch (Exception e) {
@@ -103,6 +144,16 @@ public class AddRutinaActivity extends AppCompatActivity {
             return;
         }
 
+        List<String> dias = new ArrayList<>();
+        for (int i = 0; i < diasSemana.length; i++) {
+            if (diasSeleccionados[i]) dias.add(diasSemana[i]);
+        }
+
+        if (dias.isEmpty()) {
+            Toast.makeText(this, "Selecciona al menos un día", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("usuario_id", usuarioId);
@@ -110,16 +161,16 @@ public class AddRutinaActivity extends AppCompatActivity {
         values.put("descripcion", descripcion);
         values.put("tipo", tipo);
         values.put("duracion", duracion);
-        values.put("dia_semana", dia);
+        values.put("dia_semana", TextUtils.join(",", dias));
 
-        List<String> rutasGuardadas = new ArrayList<>();
+        List<String> rutas = new ArrayList<>();
         for (Uri uri : fotosSeleccionadas) {
             String ruta = guardarImagenInterna(uri);
-            if (ruta != null) rutasGuardadas.add(ruta);
+            if (ruta != null) rutas.add(ruta);
         }
 
-        if (!rutasGuardadas.isEmpty()) {
-            values.put("fotos_rutina", TextUtils.join(",", rutasGuardadas));
+        if (!rutas.isEmpty()) {
+            values.put("fotos_rutina", TextUtils.join(",", rutas));
         }
 
         if (modoEdicion) {
@@ -136,7 +187,7 @@ public class AddRutinaActivity extends AppCompatActivity {
     private void cargarDatosRutina(int rutinaId) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor cursor = db.rawQuery(
-                "SELECT nombre, descripcion, tipo, duracion, dia_semana, fotos_rutina FROM rutinas WHERE id = ?",
+                "SELECT nombre, descripcion, tipo, duracion, dia_semana, fotos_rutina FROM rutinas WHERE id=?",
                 new String[]{String.valueOf(rutinaId)}
         );
 
@@ -146,38 +197,46 @@ public class AddRutinaActivity extends AppCompatActivity {
             etTipo.setText(cursor.getString(2));
             etDuracion.setText(String.valueOf(cursor.getInt(3)));
 
-            String dia = cursor.getString(4);
-            ArrayAdapter adapter = (ArrayAdapter) spinnerDia.getAdapter();
-            int pos = adapter.getPosition(dia);
-            spinnerDia.setSelection(pos);
+            String dias = cursor.getString(4);
+            if (!TextUtils.isEmpty(dias)) {
+                String[] guardados = dias.split(",");
+                for (int i = 0; i < diasSemana.length; i++) {
+                    diasSeleccionados[i] = false;
+                    for (String d : guardados) {
+                        if (diasSemana[i].equals(d)) {
+                            diasSeleccionados[i] = true;
+                        }
+                    }
+                }
+                actualizarTextoDias();
+            }
 
             String fotos = cursor.getString(5);
             if (!TextUtils.isEmpty(fotos)) {
                 String[] rutas = fotos.split(",");
-                if (rutas.length > 0) {
-                    ivFotoPreview.setImageURI(Uri.fromFile(new File(rutas[0])));
-                }
+                ivFotoPreview.setImageURI(Uri.fromFile(new File(rutas[0])));
             }
         }
+
         cursor.close();
     }
 
     private String guardarImagenInterna(Uri uri) {
         try {
-            InputStream inputStream = getContentResolver().openInputStream(uri);
-            String nombreArchivo = "rutina_" + System.currentTimeMillis() + ".jpg";
-            File archivo = new File(getFilesDir(), nombreArchivo);
-            OutputStream outputStream = new FileOutputStream(archivo);
+            InputStream in = getContentResolver().openInputStream(uri);
+            File file = new File(getFilesDir(),
+                    "rutina_" + System.currentTimeMillis() + ".jpg");
+            OutputStream out = new FileOutputStream(file);
 
             byte[] buffer = new byte[1024];
-            int length;
-            while ((length = inputStream.read(buffer)) > 0) {
-                outputStream.write(buffer, 0, length);
+            int len;
+            while ((len = in.read(buffer)) > 0) {
+                out.write(buffer, 0, len);
             }
 
-            inputStream.close();
-            outputStream.close();
-            return archivo.getAbsolutePath();
+            in.close();
+            out.close();
+            return file.getAbsolutePath();
         } catch (Exception e) {
             e.printStackTrace();
             return null;

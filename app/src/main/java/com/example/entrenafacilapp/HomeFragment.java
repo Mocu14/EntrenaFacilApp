@@ -57,7 +57,15 @@ public class HomeFragment extends Fragment {
         // Cómo se mostrará en el ListView
         @Override
         public String toString() {
-            return dia + ": " + nombre;
+            if (dia.equals("Todos los días")) {
+                return "Todos los días: " + nombre;
+            }
+            String[] diasArray = dia.split(",");
+            if (diasArray.length > 1) {
+                return "Varios días: " + nombre;
+            } else {
+                return dia + ": " + nombre;
+            }
         }
     }
 
@@ -151,8 +159,8 @@ public class HomeFragment extends Fragment {
             case 0: // Día actual
                 String diaActual = new SimpleDateFormat("EEEE", new Locale("es", "ES")).format(new Date());
                 diaActual = diaActual.substring(0, 1).toUpperCase() + diaActual.substring(1); // Capitalizamos
-                query = "SELECT id, nombre, dia_semana FROM rutinas WHERE usuario_id = ? AND (dia_semana = ? OR dia_semana = 'Todos los días')";
-                args = new String[]{String.valueOf(usuarioId), diaActual};
+                query = "SELECT id, nombre, dia_semana FROM rutinas WHERE usuario_id = ? AND (dia_semana LIKE ? OR dia_semana = 'Todos los días')";
+                args = new String[]{String.valueOf(usuarioId), "%" + diaActual + "%"};
                 break;
             case 1: // Toda la semana
                 query = "SELECT id, nombre, dia_semana FROM rutinas WHERE usuario_id = ?";

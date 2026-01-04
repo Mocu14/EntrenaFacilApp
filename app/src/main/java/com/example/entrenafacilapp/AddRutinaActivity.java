@@ -39,6 +39,7 @@ public class AddRutinaActivity extends AppCompatActivity {
             "Jueves", "Viernes", "Sábado", "Domingo"
     };
     private final boolean[] diasSeleccionados = new boolean[7];
+    private boolean todosLosDias = false;
 
     // Datos
     private DBHelper dbHelper;
@@ -97,32 +98,55 @@ public class AddRutinaActivity extends AppCompatActivity {
     }
 
     private void mostrarDialogoDias() {
-        new AlertDialog.Builder(this)
-                .setTitle("Selecciona los días")
-                .setMultiChoiceItems(diasSemana, diasSeleccionados,
-                        (dialog, which, isChecked) ->
-                                diasSeleccionados[which] = isChecked
-                )
-                .setPositiveButton("Aceptar", (dialog, which) -> actualizarTextoDias())
-                .setNegativeButton("Cancelar", null)
-                .show();
+        String[] diasOpciones = new String[diasSemana.length + 1];
+        diasOpciones[0] = "Todos los días";
+        System.arraycopy(diasSemana, 0, diasOpciones, 1, diasSemana.length);
+
+        boolean[] seleccion = new boolean[diasOpciones.length];
+        seleccion[0] = todosLosDias;
+        for (int i = 0; i < diasSemana.length; i++) {
+            seleccion[i + 1] = diasSeleccionados[i];
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Selecciona los días");
+        builder.setMultiChoiceItems(diasOpciones, seleccion, (dialogInterface, which, isChecked) -> {
+            if (which == 0) { // "Todos los días"
+                todosLosDias = isChecked;
+                if (todosLosDias) {
+                    for (int j = 0; j < diasSemana.length; j++) {
+                        diasSeleccionados[j] = false; // desmarcamos días individuales
+                    }
+                }
+            } else {
+                if (!todosLosDias) {
+                    diasSeleccionados[which - 1] = isChecked;
+                } else {
+                    // Si "Todos los días" está activo, ignoramos cambios en días individuales
+                }
+            }
+        });
+
+        builder.setPositiveButton("Aceptar", (d, w) -> actualizarTextoDias());
+        builder.setNegativeButton("Cancelar", null);
+        builder.show();
     }
 
     private void actualizarTextoDias() {
-        List<String> seleccionados = new ArrayList<>();
-
-        for (int i = 0; i < diasSemana.length; i++) {
-            if (diasSeleccionados[i]) {
-                seleccionados.add(diasSemana[i]);
-            }
-        }
-
-        if (seleccionados.size() == 7) {
+        if (todosLosDias) {
             tvDiasSeleccionados.setText("Todos los días");
-        } else if (seleccionados.isEmpty()) {
-            tvDiasSeleccionados.setText("Seleccionar días");
         } else {
-            tvDiasSeleccionados.setText(TextUtils.join(", ", seleccionados));
+            List<String> seleccionados = new ArrayList<>();
+            for (int i = 0; i < diasSemana.length; i++) {
+                if (diasSeleccionados[i]) seleccionados.add(diasSemana[i]);
+            }
+            if (seleccionados.size() == 7) {
+                tvDiasSeleccionados.setText("Todos los días");
+            } else if (seleccionados.isEmpty()) {
+                tvDiasSeleccionados.setText("Seleccionar días");
+            } else {
+                tvDiasSeleccionados.setText(TextUtils.join(", ", seleccionados));
+            }
         }
     }
 
@@ -145,13 +169,16 @@ public class AddRutinaActivity extends AppCompatActivity {
         }
 
         List<String> dias = new ArrayList<>();
-        for (int i = 0; i < diasSemana.length; i++) {
-            if (diasSeleccionados[i]) dias.add(diasSemana[i]);
-        }
-
-        if (dias.isEmpty()) {
-            Toast.makeText(this, "Selecciona al menos un día", Toast.LENGTH_SHORT).show();
-            return;
+        if (todosLosDias) {
+            dias.add("Todos los días");
+        } else {
+            for (int i = 0; i < diasSemana.length; i++) {
+                if (diasSeleccionados[i]) dias.add(diasSemana[i]);
+            }
+            if (dias.isEmpty()) {
+                Toast.makeText(this, "Selecciona al menos un día", Toast.LENGTH_SHORT).show();
+                return;
+            }
         }
 
         SQLiteDatabase db = dbHelper.getWritableDatabase();
@@ -199,12 +226,18 @@ public class AddRutinaActivity extends AppCompatActivity {
 
             String dias = cursor.getString(4);
             if (!TextUtils.isEmpty(dias)) {
-                String[] guardados = dias.split(",");
-                for (int i = 0; i < diasSemana.length; i++) {
-                    diasSeleccionados[i] = false;
-                    for (String d : guardados) {
-                        if (diasSemana[i].equals(d)) {
-                            diasSeleccionados[i] = true;
+                if(dias.equals("Todos los días")) {
+                    todosLosDias = true;
+                    for (int i = 0; i < diasSemana.length; i++) diasSeleccionados[i] = false;
+                } else {
+                    todosLosDias = false;
+                    String[] guardados = dias.split(",");
+                    for (int i = 0; i < diasSemana.length; i++) {
+                        diasSeleccionados[i] = false;
+                        for (String d : guardados) {
+                            if (diasSemana[i].equals(d)) {
+                                diasSeleccionados[i] = true;
+                            }
                         }
                     }
                 }

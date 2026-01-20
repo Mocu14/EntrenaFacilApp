@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Layout de perfil de usuario en ScrollView -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="24dp">
 
+    <!-- Contenedor principal vertical y centrado horizontalmente -->
     <LinearLayout
         android:orientation="vertical"
         android:gravity="center_horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <!-- Foto de perfil -->
+        <!-- Imagen de perfil del usuario -->
         <ImageView
             android:id="@+id/ivFotoPerfil"
             android:layout_width="150dp"
@@ -20,7 +22,7 @@
             android:scaleType="centerCrop"
             android:contentDescription="Foto de perfil" />
 
-        <!-- Datos del usuario -->
+        <!-- Edad del usuario -->
         <TextView
             android:id="@+id/tvEdad"
             android:text="Edad:"
@@ -29,6 +31,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
+        <!-- Peso del usuario -->
         <TextView
             android:id="@+id/tvPeso"
             android:text="Peso:"
@@ -37,6 +40,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
+        <!-- Altura del usuario -->
         <TextView
             android:id="@+id/tvAltura"
             android:text="Altura:"
@@ -45,6 +49,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
+        <!-- Sexo del usuario -->
         <TextView
             android:id="@+id/tvSexo"
             android:text="Sexo:"
@@ -52,5 +57,6 @@
             android:layout_marginBottom="8dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
+
     </LinearLayout>
 </ScrollView>

@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Layout de la pantalla de inicio de sesión -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="24dp">
 
+    <!-- Contenedor vertical centrado -->
     <LinearLayout
         android:orientation="vertical"
         android:gravity="center_horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <!-- LOGO -->
+        <!-- Logo de la aplicación -->
         <ImageView
             android:src="@drawable/entrenafacillogo"
             android:layout_width="150dp"
@@ -18,7 +20,7 @@
             android:contentDescription="Logo"
             android:layout_marginBottom="16dp" />
 
-        <!-- TÍTULO -->
+        <!-- Título de bienvenida -->
         <TextView
             android:text="¡Bienvenid@ a EntrenaFácil!"
             android:textSize="22sp"
@@ -27,7 +29,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
-        <!-- USUARIO -->
+        <!-- Campo para el nombre de usuario -->
         <EditText
             android:id="@+id/etUsuario"
             android:hint="Usuario"
@@ -35,7 +37,7 @@
             android:layout_height="wrap_content"
             android:inputType="text" />
 
-        <!-- CONTRASEÑA -->
+        <!-- Campo para la contraseña -->
         <EditText
             android:id="@+id/etContrasena"
             android:hint="Contraseña"
@@ -44,13 +46,15 @@
             android:inputType="textPassword"
             android:layout_marginTop="12dp" />
 
-        <!-- BOTÓN -->
+        <!-- Botón para iniciar sesión -->
         <Button
             android:id="@+id/btnLogin"
             android:text="Iniciar sesión"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp" />
+
+        <!-- Botón para ir al registro de nuevo usuario -->
         <Button
             android:id="@+id/btnIrRegistro"
             android:text="Registrarse"

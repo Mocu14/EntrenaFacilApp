@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Layout principal de gestión de rutinas del usuario -->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
@@ -6,25 +7,29 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- Botón para agregar una nueva rutina -->
     <Button
         android:id="@+id/btnAgregar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Agregar rutina" />
 
+    <!-- Botón para acceder al historial de rutinas completadas -->
     <Button
         android:id="@+id/btnHistorial"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Ver historial"
         android:layout_marginTop="8dp" />
+
+    <!-- Spinner para filtrar rutinas por tipo o categoría -->
     <Spinner
         android:id="@+id/spinnerFiltro"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp" />
 
-
+    <!-- ListView que muestra todas las rutinas del usuario -->
     <ListView
         android:id="@+id/listViewRutinas"
         android:layout_width="match_parent"

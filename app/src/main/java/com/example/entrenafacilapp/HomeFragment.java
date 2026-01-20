@@ -24,42 +24,49 @@ import java.util.Date;
 import java.util.Locale;
 
 /**
- * Fragmento principal de la app. Muestra las rutinas según el filtro aplicado.
+ * Fragmento principal de la aplicación.
+ *
+ * Muestra las rutinas del usuario filtradas por día, por semana completa
+ * o por aquellas que se realizan todos los días.
  */
 public class HomeFragment extends Fragment {
 
-    // Base de datos
+    // Helper de la base de datos
     DBHelper dbHelper;
 
-    // Elementos de la vista
+    // Componentes de la interfaz
     ListView listView;
     Spinner spinnerFiltro;
     Button btnAgregarRutina;
 
-    // Identificador del usuario logueado
+    // Identificador del usuario autenticado
     int usuarioId;
 
     /**
-     * Clase interna para representar una rutina en la lista
+     * Clase interna que representa una rutina en la lista.
+     * Permite asociar el ID de la base de datos con el texto mostrado.
      */
     public static class Rutina {
         public int id;
         public String nombre;
         public String dia;
 
-        // Constructor
         public Rutina(int id, String nombre, String dia) {
             this.id = id;
             this.nombre = nombre;
             this.dia = dia;
         }
 
-        // Cómo se mostrará en el ListView
+        /**
+         * Define cómo se mostrará la rutina dentro del ListView.
+         * Tiene en cuenta si se repite varios días o todos los días.
+         */
         @Override
         public String toString() {
             if (dia.equals("Todos los días")) {
                 return "Todos los días: " + nombre;
             }
+
             String[] diasArray = dia.split(",");
             if (diasArray.length > 1) {
                 return "Varios días: " + nombre;
@@ -70,67 +77,72 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * Método que se ejecuta al crear la vista del fragmento
+     * Se ejecuta cuando se crea la vista del fragmento.
+     * Inicializa los controles, carga el usuario y configura los filtros.
      */
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
 
-        // Cargamos el layout del fragmento
+        // Se carga el layout del fragmento
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
-        // Inicializamos la base de datos
+        // Inicialización de la base de datos
         dbHelper = new DBHelper(getContext());
 
-        // Obtenemos el ID del usuario desde las preferencias
+        // Obtención del usuario desde la sesión
         SharedPreferences prefs = requireContext().getSharedPreferences("sesion", getContext().MODE_PRIVATE);
         usuarioId = prefs.getInt("usuario_id", -1);
 
-        // Referenciamos los elementos de la vista
+        // Enlace con los elementos del layout
         listView = view.findViewById(R.id.listViewRutinas);
         spinnerFiltro = view.findViewById(R.id.spinnerFiltro);
         btnAgregarRutina = view.findViewById(R.id.btnAgregarRutina);
 
-        // Configuración del Spinner con filtros
+        // Configuración del spinner de filtros
         String[] opciones = {"Día actual", "Toda la semana", "Todos los días"};
-        ArrayAdapter<String> filtroAdapter = new ArrayAdapter<>(requireContext(),
-                android.R.layout.simple_spinner_item, opciones);
+        ArrayAdapter<String> filtroAdapter = new ArrayAdapter<>(
+                requireContext(),
+                android.R.layout.simple_spinner_item,
+                opciones
+        );
         filtroAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerFiltro.setAdapter(filtroAdapter);
 
-        // Al seleccionar una opción del spinner, se carga la lista de rutinas filtradas
+        // Cada vez que cambia el filtro se recarga la lista
         spinnerFiltro.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view1, int position, long id) {
-                cargarRutinasFiltradas(position); // Cargamos las rutinas según filtro
+                cargarRutinasFiltradas(position);
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-                // No se hace nada si no selecciona nada
             }
         });
 
-        // Botón para agregar una nueva rutina
+        // Botón para crear una nueva rutina
         btnAgregarRutina.setOnClickListener(v -> {
             Intent intent = new Intent(getContext(), AddRutinaActivity.class);
-            startActivity(intent); // Abrimos la actividad de añadir rutina
+            startActivity(intent);
         });
 
-        // Si pulsamos sobre una rutina, vamos al detalle
+        // Al pulsar una rutina se abre su pantalla de detalle
         listView.setOnItemClickListener((parent, view12, position, id) -> {
             Rutina rutina = (Rutina) parent.getItemAtPosition(position);
             Intent intent = new Intent(getContext(), DetalleRutinaActivity.class);
             intent.putExtra("rutina_id", rutina.id);
-            startActivity(intent); // Mostramos los detalles de esa rutina
+            startActivity(intent);
         });
 
-        return view; // Retornamos la vista completa
+        return view;
     }
 
     /**
-     * Cuando se vuelve al fragmento (ej: tras crear o editar rutina), recarga la lista
+     * Cuando el usuario vuelve al fragmento se recargan las rutinas,
+     * por ejemplo tras crear o editar una.
      */
     @Override
     public void onResume() {
@@ -140,53 +152,59 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * Carga la lista de rutinas según el filtro seleccionado
-     * @param opcion posición del filtro: 0 = Día actual, 1 = Toda la semana, 2 = Todos los días
+     * Obtiene de la base de datos las rutinas según el filtro aplicado.
+     *
+     * @param opcion 0 = día actual, 1 = toda la semana, 2 = solo "todos los días"
      */
     private void cargarRutinasFiltradas(int opcion) {
-        // Lista donde se guardarán las rutinas
-        ArrayList<Rutina> lista = new ArrayList<>();
 
-        // Abrimos la base de datos
+        ArrayList<Rutina> lista = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
 
-        // Variables para la consulta
         String query;
         String[] args;
 
-        // Elegimos la consulta dependiendo del filtro
         switch (opcion) {
             case 0: // Día actual
                 String diaActual = new SimpleDateFormat("EEEE", new Locale("es", "ES")).format(new Date());
-                diaActual = diaActual.substring(0, 1).toUpperCase() + diaActual.substring(1); // Capitalizamos
-                query = "SELECT id, nombre, dia_semana FROM rutinas WHERE usuario_id = ? AND (dia_semana LIKE ? OR dia_semana = 'Todos los días')";
+                diaActual = diaActual.substring(0, 1).toUpperCase() + diaActual.substring(1);
+
+                query = "SELECT id, nombre, dia_semana FROM rutinas " +
+                        "WHERE usuario_id = ? AND (dia_semana LIKE ? OR dia_semana = 'Todos los días')";
                 args = new String[]{String.valueOf(usuarioId), "%" + diaActual + "%"};
                 break;
+
             case 1: // Toda la semana
                 query = "SELECT id, nombre, dia_semana FROM rutinas WHERE usuario_id = ?";
                 args = new String[]{String.valueOf(usuarioId)};
                 break;
-            case 2: // Solo "Todos los días"
-                query = "SELECT id, nombre, dia_semana FROM rutinas WHERE usuario_id = ? AND dia_semana = 'Todos los días'";
+
+            case 2: // Solo rutinas diarias
+                query = "SELECT id, nombre, dia_semana FROM rutinas " +
+                        "WHERE usuario_id = ? AND dia_semana = 'Todos los días'";
                 args = new String[]{String.valueOf(usuarioId)};
                 break;
+
             default:
-                return; // Si algo va mal, no seguimos
+                return;
         }
 
-        // Ejecutamos la consulta y rellenamos la lista
         Cursor cursor = db.rawQuery(query, args);
         while (cursor.moveToNext()) {
-            int id = cursor.getInt(0);
-            String nombre = cursor.getString(1);
-            String dia = cursor.getString(2);
-            lista.add(new Rutina(id, nombre, dia));
+            lista.add(new Rutina(
+                    cursor.getInt(0),
+                    cursor.getString(1),
+                    cursor.getString(2)
+            ));
         }
-        cursor.close(); // Cerramos el cursor
+        cursor.close();
 
-        // Adaptador para mostrar las rutinas en el ListView
-        ArrayAdapter<Rutina> adapter = new ArrayAdapter<>(requireContext(),
-                android.R.layout.simple_list_item_1, lista);
-        listView.setAdapter(adapter); // Asignamos el adaptador
+        // Se muestra la lista de rutinas filtradas
+        ArrayAdapter<Rutina> adapter = new ArrayAdapter<>(
+                requireContext(),
+                android.R.layout.simple_list_item_1,
+                lista
+        );
+        listView.setAdapter(adapter);
     }
 }

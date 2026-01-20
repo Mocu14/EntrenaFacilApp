@@ -1,32 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Layout para crear o editar una rutina de entrenamiento -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- Contenedor principal vertical -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Campo para introducir el nombre de la rutina -->
         <EditText
             android:id="@+id/etNombre"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Nombre" />
 
+        <!-- Campo para la descripción de la rutina -->
         <EditText
             android:id="@+id/etDescripcion"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Descripción" />
 
+        <!-- Campo para indicar el tipo de rutina (Cardio, Fuerza...) -->
         <EditText
             android:id="@+id/etTipo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Tipo (Cardio, Fuerza...)" />
 
+        <!-- Campo para la duración de la rutina en minutos -->
         <EditText
             android:id="@+id/etDuracion"
             android:layout_width="match_parent"
@@ -34,7 +40,7 @@
             android:hint="Duración (minutos)"
             android:inputType="number" />
 
-        <!-- Selector de días estilo Spinner -->
+        <!-- Selector de días de la semana en los que se realizará la rutina -->
         <TextView
             android:id="@+id/tvDiasSeleccionados"
             android:layout_width="match_parent"
@@ -44,6 +50,7 @@
             android:text="Seleccionar días"
             android:background="@android:drawable/editbox_background" />
 
+        <!-- Imagen de la rutina (ejemplo: foto de ejercicio) -->
         <ImageView
             android:id="@+id/ivFotoRutina"
             android:layout_width="match_parent"
@@ -53,6 +60,7 @@
             android:background="@android:color/darker_gray"
             android:contentDescription="Foto de la rutina" />
 
+        <!-- Botón para seleccionar una o varias fotos desde la galería -->
         <Button
             android:id="@+id/btnSeleccionarFoto"
             android:layout_width="match_parent"
@@ -60,6 +68,7 @@
             android:layout_marginTop="8dp"
             android:text="Seleccionar Fotos" />
 
+        <!-- Botón para guardar la rutina en la base de datos -->
         <Button
             android:id="@+id/btnGuardar"
             android:layout_width="match_parent"

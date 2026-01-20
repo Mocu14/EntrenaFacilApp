@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Layout de registro de usuario con scroll para permitir desplazamiento -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -10,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <!-- Foto de perfil -->
+        <!-- Imagen de perfil del usuario -->
         <ImageView
             android:id="@+id/ivFotoPerfil"
             android:layout_width="150dp"
@@ -21,14 +22,14 @@
             android:background="@android:color/darker_gray"
             android:contentDescription="Foto de perfil" />
 
-        <!-- Nombre -->
+        <!-- Campo para introducir el nombre de usuario -->
         <EditText
             android:id="@+id/etUsuario"
             android:hint="Usuario"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
-        <!-- Contraseña -->
+        <!-- Campo para introducir la contraseña -->
         <EditText
             android:id="@+id/etContrasena"
             android:hint="Contraseña"
@@ -37,7 +38,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp" />
 
-        <!-- Edad -->
+        <!-- Campo para introducir la edad -->
         <EditText
             android:id="@+id/etEdad"
             android:hint="Edad"
@@ -46,7 +47,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp" />
 
-        <!-- Peso -->
+        <!-- Campo para introducir el peso en kg -->
         <EditText
             android:id="@+id/etPeso"
             android:hint="Peso (kg)"
@@ -55,7 +56,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp" />
 
-        <!-- Altura -->
+        <!-- Campo para introducir la altura en cm -->
         <EditText
             android:id="@+id/etAltura"
             android:hint="Altura (cm)"
@@ -64,14 +65,14 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp" />
 
-        <!-- Spinner Sexo -->
+        <!-- Spinner para seleccionar el sexo del usuario -->
         <Spinner
             android:id="@+id/spinnerSexo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp" />
 
-        <!-- Botón Registrar -->
+        <!-- Botón para enviar el registro -->
         <Button
             android:id="@+id/btnRegistrar"
             android:text="Registrarse"

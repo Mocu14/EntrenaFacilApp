@@ -11,71 +11,79 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+/**
+ * Activity encargada de la autenticación de usuarios.
+ *
+ * Permite al usuario introducir sus credenciales, validarlas contra la base
+ * de datos local y crear una sesión persistente mediante SharedPreferences.
+ */
 public class LoginActivity extends AppCompatActivity {
 
-    // Declaramos los elementos de la interfaz
+    // Campos de entrada y botones de la interfaz
     EditText etUsuario, etContrasena;
     Button btnLogin, btnIrRegistro;
 
-    // Referencia a la base de datos
+    // Helper para acceso a la base de datos
     DBHelper dbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login); // Cargamos el layout
+        setContentView(R.layout.activity_login);
 
-        // Asociamos las variables con los elementos del layout
+        // Enlace entre variables y elementos del layout
         etUsuario = findViewById(R.id.etUsuario);
         etContrasena = findViewById(R.id.etContrasena);
         btnLogin = findViewById(R.id.btnLogin);
         btnIrRegistro = findViewById(R.id.btnIrRegistro);
 
-        // Instanciamos el helper de la base de datos
+        // Inicialización del helper de la base de datos
         dbHelper = new DBHelper(this);
 
-        // Configuramos la acción del botón "Iniciar sesión"
+        // Acción del botón de inicio de sesión
         btnLogin.setOnClickListener(v -> login());
 
-        // Botón para ir al registro
+        // Botón que redirige al formulario de registro
         btnIrRegistro.setOnClickListener(v -> {
-            // Abrimos la pantalla de registro
             startActivity(new Intent(this, RegistroActivity.class));
         });
     }
 
-    // Método que se llama al pulsar el botón de login
+    /**
+     * Realiza el proceso de autenticación del usuario.
+     *
+     * Comprueba que las credenciales introducidas existen en la base de datos.
+     * Si son válidas, se guarda el ID del usuario en SharedPreferences
+     * para mantener la sesión activa durante el uso de la aplicación.
+     */
     private void login() {
-        // Obtenemos los datos ingresados
+
         String usuario = etUsuario.getText().toString();
         String contrasena = etContrasena.getText().toString();
 
-        // Accedemos a la base de datos en modo lectura
         SQLiteDatabase db = dbHelper.getReadableDatabase();
 
-        // Hacemos una consulta para buscar al usuario con esa contraseña
         Cursor cursor = db.rawQuery(
                 "SELECT id FROM usuarios WHERE nombre=? AND contrasena=?",
                 new String[]{usuario, contrasena}
         );
 
-        // Si encontramos el usuario
         if (cursor.moveToFirst()) {
-            int userId = cursor.getInt(0); // Obtenemos el ID del usuario
+            int userId = cursor.getInt(0);
 
-            // Guardamos el ID en SharedPreferences para mantener sesión iniciada
+            // Se guarda el ID del usuario en la sesión
             SharedPreferences prefs = getSharedPreferences("sesion", MODE_PRIVATE);
             prefs.edit().putInt("usuario_id", userId).apply();
 
-            // Mostramos mensaje y vamos al menú principal
             Toast.makeText(this, "Login exitoso", Toast.LENGTH_SHORT).show();
+
+            // Se accede al menú principal de la aplicación
             startActivity(new Intent(this, MainActivity.class));
-            finish(); // Cerramos esta pantalla
+            finish();
         } else {
-            // Si no se encuentra el usuario, mostramos error
             Toast.makeText(this, "Credenciales incorrectas", Toast.LENGTH_SHORT).show();
         }
 
-        cursor.close(); // Cerramos el cursor
+        cursor.close();
     }
 }

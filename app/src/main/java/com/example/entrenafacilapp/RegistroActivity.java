@@ -16,18 +16,25 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+/**
+ * Activity encargada del registro de nuevos usuarios.
+ *
+ * Permite al usuario introducir sus datos personales, elegir una foto de perfil
+ * y guardar toda la información en la base de datos SQLite. Además, genera
+ * rutinas predefinidas automáticamente para cada nuevo usuario.
+ */
 public class RegistroActivity extends AppCompatActivity {
 
-    // Elementos del formulario
+    // Elementos del formulario de registro
     EditText etUsuario, etContrasena, etEdad, etPeso, etAltura;
     Spinner spinnerSexo;
     ImageView ivFotoPerfil;
     Button btnRegistrar;
 
-    // Base de datos
+    // Helper para acceso a la base de datos
     DBHelper dbHelper;
 
-    // Variables para la imagen seleccionada
+    // Variables relacionadas con la imagen de perfil
     Uri imagenSeleccionada;
     private static final int PICK_IMAGE = 100;
     String rutaLocalImagen = null;
@@ -37,7 +44,7 @@ public class RegistroActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_registro);
 
-        // Asociamos cada elemento del layout con su variable
+        // Asociamos los elementos visuales con sus variables
         etUsuario = findViewById(R.id.etUsuario);
         etContrasena = findViewById(R.id.etContrasena);
         etEdad = findViewById(R.id.etEdad);
@@ -47,9 +54,10 @@ public class RegistroActivity extends AppCompatActivity {
         ivFotoPerfil = findViewById(R.id.ivFotoPerfil);
         btnRegistrar = findViewById(R.id.btnRegistrar);
 
-        dbHelper = new DBHelper(this); // Inicializamos la base de datos
+        // Inicializamos la base de datos
+        dbHelper = new DBHelper(this);
 
-        // Rellenamos el Spinner con opciones de sexo
+        // Configuración del Spinner para seleccionar el sexo
         ArrayAdapter<String> adapterSexo = new ArrayAdapter<>(
                 this,
                 android.R.layout.simple_spinner_item,
@@ -57,26 +65,32 @@ public class RegistroActivity extends AppCompatActivity {
         adapterSexo.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerSexo.setAdapter(adapterSexo);
 
-        // Cuando se hace click en la imagen, abrimos la galería
+        // Listener para seleccionar imagen de perfil desde galería
         ivFotoPerfil.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_PICK);
             intent.setType("image/*");
-            startActivityForResult(intent, PICK_IMAGE); // Código de respuesta
+            startActivityForResult(intent, PICK_IMAGE); // Abrimos galería
         });
 
-        // Al pulsar el botón de registrar, llamamos al método
+        // Listener para el botón de registrar usuario
         btnRegistrar.setOnClickListener(v -> registrarUsuario());
     }
 
-    // Este método recibe el resultado cuando se selecciona la imagen
+    /**
+     * Recibe el resultado de la selección de imagen desde la galería.
+     *
+     * @param requestCode Código de la petición
+     * @param resultCode Resultado de la actividad
+     * @param data Datos devueltos (URI de la imagen)
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        // Si todo fue bien y hay imagen
+        // Comprobamos que se seleccionó correctamente una imagen
         if (resultCode == RESULT_OK && requestCode == PICK_IMAGE && data != null) {
-            imagenSeleccionada = data.getData(); // Obtenemos la URI de la imagen
-            ivFotoPerfil.setImageURI(imagenSeleccionada); // Mostramos la imagen en pantalla
+            imagenSeleccionada = data.getData(); // URI de la imagen
+            ivFotoPerfil.setImageURI(imagenSeleccionada); // Mostramos la imagen
 
             // Guardamos la imagen en almacenamiento interno
             rutaLocalImagen = copiarImagenLocal(imagenSeleccionada);
@@ -89,14 +103,20 @@ public class RegistroActivity extends AppCompatActivity {
         }
     }
 
-    // Este método guarda la imagen seleccionada en el almacenamiento interno
+    /**
+     * Copia la imagen seleccionada al almacenamiento interno de la app.
+     *
+     * @param uriOrigen URI de la imagen original
+     * @return Ruta local de la imagen guardada, o null si hubo error
+     */
     private String copiarImagenLocal(Uri uriOrigen) {
         try {
             InputStream inputStream = getContentResolver().openInputStream(uriOrigen);
             File archivoDestino = new File(getFilesDir(), "foto_perfil_" + System.currentTimeMillis() + ".jpg");
             OutputStream outputStream = new FileOutputStream(archivoDestino);
 
-            byte[] buffer = new byte[1024]; // Para copiar datos
+            // Copiamos la imagen en bloques
+            byte[] buffer = new byte[1024];
             int length;
             while ((length = inputStream.read(buffer)) > 0) {
                 outputStream.write(buffer, 0, length);
@@ -105,16 +125,19 @@ public class RegistroActivity extends AppCompatActivity {
             inputStream.close();
             outputStream.close();
 
-            return archivoDestino.getAbsolutePath(); // Devolvemos la ruta local
+            return archivoDestino.getAbsolutePath();
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
     }
 
-    // Método que guarda el usuario en la base de datos
+    /**
+     * Registra un nuevo usuario en la base de datos.
+     * Valida los campos obligatorios y crea rutinas predefinidas.
+     */
     private void registrarUsuario() {
-        // Recogemos todos los datos del formulario
+        // Obtenemos los datos introducidos por el usuario
         String usuario = etUsuario.getText().toString().trim();
         String contrasena = etContrasena.getText().toString().trim();
         String edad = etEdad.getText().toString().trim();
@@ -122,13 +145,13 @@ public class RegistroActivity extends AppCompatActivity {
         String altura = etAltura.getText().toString().trim();
         String sexo = spinnerSexo.getSelectedItem().toString();
 
-        // Validamos campos obligatorios
+        // Validación básica de campos obligatorios
         if (usuario.isEmpty() || contrasena.isEmpty()) {
             Toast.makeText(this, "Usuario y contraseña obligatorios", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Insertamos en la base de datos
+        // Insertamos los datos en la tabla usuarios
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("nombre", usuario);
@@ -137,12 +160,11 @@ public class RegistroActivity extends AppCompatActivity {
         values.put("peso", peso);
         values.put("altura", altura);
         values.put("sexo", sexo);
-        values.put("foto_perfil", rutaLocalImagen); // Ruta de imagen guardada
+        values.put("foto_perfil", rutaLocalImagen);
 
-        // Ejecutamos el insert
         long id = db.insert("usuarios", null, values);
 
-        // Si se insertó correctamente, creamos rutinas por defecto
+        // Si se insertó correctamente, añadimos rutinas predefinidas
         if (id != -1) {
             insertarRutinasPredefinidas((int) id);
             Toast.makeText(this, "Registro exitoso", Toast.LENGTH_SHORT).show();
@@ -153,11 +175,15 @@ public class RegistroActivity extends AppCompatActivity {
         }
     }
 
-    // Método para insertar rutinas básicas automáticamente
+    /**
+     * Inserta automáticamente rutinas básicas para cada usuario nuevo.
+     *
+     * @param usuarioId ID del usuario recién registrado
+     */
     private void insertarRutinasPredefinidas(int usuarioId) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
 
-        // Insertamos una rutina por cada día de la semana
+        // Rutinas predefinidas por día de la semana
         insertarRutina(db, usuarioId, "Cardio", "30 min de cinta + bicicleta", "Resistencia", 45, "Lunes");
         insertarRutina(db, usuarioId, "Piernas", "Sentadillas, zancadas y prensa", "Fuerza", 60, "Martes");
         insertarRutina(db, usuarioId, "Espalda", "Dominadas, remo con barra", "Fuerza", 50, "Miércoles");
@@ -166,11 +192,21 @@ public class RegistroActivity extends AppCompatActivity {
         insertarRutina(db, usuarioId, "Core", "Abdominales, plancha, giros rusos", "Estabilidad", 40, "Sábado");
         insertarRutina(db, usuarioId, "Full Body", "Circuito de cuerpo completo", "Mixto", 60, "Domingo");
 
-        // Una rutina diaria general
+        // Rutina diaria general
         insertarRutina(db, usuarioId, "Estiramientos", "Estiramiento general post-entreno", "Recuperación", 15, "Todos los días");
     }
 
-    // Método que inserta una rutina individual
+    /**
+     * Inserta una rutina individual en la base de datos.
+     *
+     * @param db Base de datos
+     * @param usuarioId ID del usuario
+     * @param nombre Nombre de la rutina
+     * @param descripcion Descripción del ejercicio
+     * @param tipo Tipo de rutina
+     * @param duracion Duración en minutos
+     * @param dia Día de la semana asignado
+     */
     private void insertarRutina(SQLiteDatabase db, int usuarioId, String nombre, String descripcion, String tipo, int duracion, String dia) {
         ContentValues rutina = new ContentValues();
         rutina.put("usuario_id", usuarioId);

@@ -1,67 +1,76 @@
 package com.example.entrenafacilapp;
 
-import android.content.SharedPreferences; // Para acceder a los datos de sesión guardados
-import android.database.Cursor;           // Para manejar resultados de consultas
-import android.database.sqlite.SQLiteDatabase; // Para usar la base de datos SQLite
+import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
-import android.widget.TextView;           // Para mostrar datos al usuario
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+/**
+ * Activity encargada de mostrar la información del perfil del usuario.
+ *
+ * Obtiene los datos del usuario autenticado desde la base de datos
+ * y los muestra en la interfaz de usuario mediante TextViews.
+ */
 public class PerfilActivity extends AppCompatActivity {
 
-    // Declaramos los TextView para mostrar los datos del usuario
+    // TextViews para mostrar los datos del usuario
     TextView tvEdad, tvPeso, tvAltura, tvSexo;
 
-    // Objeto para acceder a la base de datos
+    // Helper para acceso a la base de datos
     DBHelper dbHelper;
 
-    // Variable que guardará el ID del usuario actual
+    // ID del usuario actual, obtenido de la sesión activa
     int usuarioId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);                 // Llamamos al método padre
-        setContentView(R.layout.activity_perfil);           // Cargamos el layout con los elementos visuales
+        super.onCreate(savedInstanceState);                 // Llamada al método padre
+        setContentView(R.layout.activity_perfil);           // Carga del layout visual
 
-        // Enlazamos las variables con los elementos del layout
+        // Enlazamos variables con los elementos del layout
         tvEdad = findViewById(R.id.tvEdad);
         tvPeso = findViewById(R.id.tvPeso);
         tvAltura = findViewById(R.id.tvAltura);
         tvSexo = findViewById(R.id.tvSexo);
 
-        // Inicializamos la base de datos
+        // Inicializamos el helper de la base de datos
         dbHelper = new DBHelper(this);
 
-        // Obtenemos el ID del usuario guardado en las preferencias (sesión activa)
+        // Obtenemos el ID del usuario actualmente logueado desde SharedPreferences
         SharedPreferences prefs = getSharedPreferences("sesion", MODE_PRIVATE);
-        usuarioId = prefs.getInt("usuario_id", -1); // -1 si no hay usuario guardado
+        usuarioId = prefs.getInt("usuario_id", -1); // -1 si no hay sesión activa
 
-        // Llamamos al método que carga los datos desde la base de datos
+        // Cargamos los datos del usuario desde la base de datos y los mostramos
         cargarDatosUsuario();
     }
 
-    // Este método obtiene los datos del usuario desde SQLite y los muestra
+    /**
+     * Obtiene los datos del usuario desde la base de datos SQLite
+     * y los asigna a los TextViews correspondientes.
+     */
     private void cargarDatosUsuario() {
         // Abrimos la base de datos en modo lectura
         SQLiteDatabase db = dbHelper.getReadableDatabase();
 
-        // Ejecutamos una consulta SQL para obtener los campos de ese usuario
+        // Consulta SQL para obtener edad, peso, altura y sexo del usuario
         Cursor cursor = db.rawQuery(
                 "SELECT edad, peso, altura, sexo FROM usuarios WHERE id = ?",
-                new String[]{String.valueOf(usuarioId)} // Reemplaza el ? por el ID
+                new String[]{String.valueOf(usuarioId)} // Sustituye el ? por el ID
         );
 
-        // Si hay datos (es decir, si encontró al usuario)
+        // Si existen datos del usuario
         if (cursor.moveToFirst()) {
-            // Asignamos los valores a los TextView
+            // Asignamos los valores obtenidos a los TextViews
             tvEdad.setText("Edad: " + cursor.getInt(0));
             tvPeso.setText("Peso: " + cursor.getDouble(1) + " kg");
             tvAltura.setText("Altura: " + cursor.getDouble(2) + " cm");
             tvSexo.setText("Sexo: " + cursor.getString(3));
         }
 
-        // Cerramos el cursor para liberar recursos
+        // Cerramos el cursor para liberar recursos de memoria
         cursor.close();
     }
 }

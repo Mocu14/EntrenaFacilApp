@@ -25,30 +25,64 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Activity encargada de la creación y edición de rutinas de entrenamiento.
+ *
+ * Permite:
+ *  - Introducir los datos básicos de la rutina.
+ *  - Seleccionar uno o varios días de la semana.
+ *  - Asociar una o varias imágenes a la rutina.
+ *  - Guardar o actualizar la información en la base de datos.
+ */
 public class AddRutinaActivity extends AppCompatActivity {
 
-    // UI
+    // ==========================
+    // Componentes de la interfaz
+    // ==========================
     private EditText etNombre, etDescripcion, etTipo, etDuracion;
     private TextView tvDiasSeleccionados;
     private Button btnGuardar, btnSeleccionarFoto;
     private ImageView ivFotoPreview;
 
-    // Días
+    // ==========================
+    // Gestión de días de la semana
+    // ==========================
+
+    // Lista de días disponibles para asignar a una rutina
     private final String[] diasSemana = {
             "Lunes", "Martes", "Miércoles",
             "Jueves", "Viernes", "Sábado", "Domingo"
     };
+
+    // Vector que indica qué días están seleccionados
     private final boolean[] diasSeleccionados = new boolean[7];
+
+    // Indica si la rutina se ejecuta todos los días
     private boolean todosLosDias = false;
 
-    // Datos
+    // ==========================
+    // Datos y control
+    // ==========================
+
+    // Acceso a la base de datos
     private DBHelper dbHelper;
+
+    // Identificador del usuario logueado
     private int usuarioId;
+
+    // Indica si se está creando o editando una rutina
     private boolean modoEdicion = false;
+
+    // Identificador de la rutina cuando se edita
     private int rutinaId = -1;
 
+    // Lista de imágenes seleccionadas por el usuario
     private final List<Uri> fotosSeleccionadas = new ArrayList<>();
 
+    /**
+     * Lanza el selector de documentos del sistema para elegir múltiples imágenes.
+     * Se utiliza para asociar varias fotos a una misma rutina.
+     */
     private final ActivityResultLauncher<String[]> seleccionarMultiplesFotos =
             registerForActivityResult(
                     new ActivityResultContracts.OpenMultipleDocuments(),
@@ -56,6 +90,7 @@ public class AddRutinaActivity extends AppCompatActivity {
                         if (uris != null && !uris.isEmpty()) {
                             fotosSeleccionadas.clear();
                             fotosSeleccionadas.addAll(uris);
+                            // Se muestra la primera imagen como vista previa
                             ivFotoPreview.setImageURI(fotosSeleccionadas.get(0));
                         }
                     }
@@ -66,10 +101,14 @@ public class AddRutinaActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_rutina);
 
+        // Inicialización del helper de base de datos
         dbHelper = new DBHelper(this);
+
+        // Obtención del usuario logueado desde la sesión
         SharedPreferences prefs = getSharedPreferences("sesion", MODE_PRIVATE);
         usuarioId = prefs.getInt("usuario_id", -1);
 
+        // Enlace de componentes visuales con el layout
         etNombre = findViewById(R.id.etNombre);
         etDescripcion = findViewById(R.id.etDescripcion);
         etTipo = findViewById(R.id.etTipo);
@@ -79,8 +118,10 @@ public class AddRutinaActivity extends AppCompatActivity {
         btnSeleccionarFoto = findViewById(R.id.btnSeleccionarFoto);
         ivFotoPreview = findViewById(R.id.ivFotoRutina);
 
+        // Listener para abrir el diálogo de selección de días
         tvDiasSeleccionados.setOnClickListener(v -> mostrarDialogoDias());
 
+        // Se comprueba si se ha abierto la Activity en modo edición
         modoEdicion = getIntent().getBooleanExtra("modo_edicion", false);
         if (modoEdicion) {
             rutinaId = getIntent().getIntExtra("rutina_id", -1);
@@ -90,13 +131,19 @@ public class AddRutinaActivity extends AppCompatActivity {
             }
         }
 
+        // Listener para seleccionar imágenes
         btnSeleccionarFoto.setOnClickListener(
                 v -> seleccionarMultiplesFotos.launch(new String[]{"image/*"})
         );
 
+        // Listener para guardar o actualizar la rutina
         btnGuardar.setOnClickListener(v -> guardarRutina());
     }
 
+    /**
+     * Muestra un diálogo de selección múltiple para elegir los días de la semana
+     * en los que se realizará la rutina.
+     */
     private void mostrarDialogoDias() {
         String[] diasOpciones = new String[diasSemana.length + 1];
         diasOpciones[0] = "Todos los días";
@@ -111,18 +158,18 @@ public class AddRutinaActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Selecciona los días");
         builder.setMultiChoiceItems(diasOpciones, seleccion, (dialogInterface, which, isChecked) -> {
-            if (which == 0) { // "Todos los días"
+            if (which == 0) { // Opción "Todos los días"
                 todosLosDias = isChecked;
                 if (todosLosDias) {
+                    // Si se selecciona "Todos los días", se desmarcan los demás
                     for (int j = 0; j < diasSemana.length; j++) {
-                        diasSeleccionados[j] = false; // desmarcamos días individuales
+                        diasSeleccionados[j] = false;
                     }
                 }
             } else {
+                // Si no está activo "Todos los días", se permite marcar días individuales
                 if (!todosLosDias) {
                     diasSeleccionados[which - 1] = isChecked;
-                } else {
-                    // Si "Todos los días" está activo, ignoramos cambios en días individuales
                 }
             }
         });
@@ -132,6 +179,9 @@ public class AddRutinaActivity extends AppCompatActivity {
         builder.show();
     }
 
+    /**
+     * Actualiza el TextView que muestra los días seleccionados al usuario.
+     */
     private void actualizarTextoDias() {
         if (todosLosDias) {
             tvDiasSeleccionados.setText("Todos los días");
@@ -140,9 +190,8 @@ public class AddRutinaActivity extends AppCompatActivity {
             for (int i = 0; i < diasSemana.length; i++) {
                 if (diasSeleccionados[i]) seleccionados.add(diasSemana[i]);
             }
-            if (seleccionados.size() == 7) {
-                tvDiasSeleccionados.setText("Todos los días");
-            } else if (seleccionados.isEmpty()) {
+
+            if (seleccionados.isEmpty()) {
                 tvDiasSeleccionados.setText("Seleccionar días");
             } else {
                 tvDiasSeleccionados.setText(TextUtils.join(", ", seleccionados));
@@ -150,6 +199,10 @@ public class AddRutinaActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Valida los datos introducidos por el usuario y guarda o actualiza
+     * la rutina en la base de datos.
+     */
     private void guardarRutina() {
         String nombre = etNombre.getText().toString().trim();
         String descripcion = etDescripcion.getText().toString().trim();
@@ -163,11 +216,13 @@ public class AddRutinaActivity extends AppCompatActivity {
             return;
         }
 
+        // Validación de campos obligatorios
         if (nombre.isEmpty() || tipo.isEmpty()) {
             Toast.makeText(this, "Faltan campos obligatorios", Toast.LENGTH_SHORT).show();
             return;
         }
 
+        // Procesado de los días seleccionados
         List<String> dias = new ArrayList<>();
         if (todosLosDias) {
             dias.add("Todos los días");
@@ -190,6 +245,7 @@ public class AddRutinaActivity extends AppCompatActivity {
         values.put("duracion", duracion);
         values.put("dia_semana", TextUtils.join(",", dias));
 
+        // Guardado de las imágenes seleccionadas
         List<String> rutas = new ArrayList<>();
         for (Uri uri : fotosSeleccionadas) {
             String ruta = guardarImagenInterna(uri);
@@ -200,6 +256,7 @@ public class AddRutinaActivity extends AppCompatActivity {
             values.put("fotos_rutina", TextUtils.join(",", rutas));
         }
 
+        // Inserción o actualización en función del modo
         if (modoEdicion) {
             db.update("rutinas", values, "id=?", new String[]{String.valueOf(rutinaId)});
             Toast.makeText(this, "Rutina actualizada", Toast.LENGTH_SHORT).show();
@@ -211,6 +268,9 @@ public class AddRutinaActivity extends AppCompatActivity {
         finish();
     }
 
+    /**
+     * Carga los datos de una rutina existente para permitir su edición.
+     */
     private void cargarDatosRutina(int rutinaId) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor cursor = db.rawQuery(
@@ -224,13 +284,12 @@ public class AddRutinaActivity extends AppCompatActivity {
             etTipo.setText(cursor.getString(2));
             etDuracion.setText(String.valueOf(cursor.getInt(3)));
 
+            // Reconstrucción de los días seleccionados
             String dias = cursor.getString(4);
             if (!TextUtils.isEmpty(dias)) {
-                if(dias.equals("Todos los días")) {
+                if (dias.equals("Todos los días")) {
                     todosLosDias = true;
-                    for (int i = 0; i < diasSemana.length; i++) diasSeleccionados[i] = false;
                 } else {
-                    todosLosDias = false;
                     String[] guardados = dias.split(",");
                     for (int i = 0; i < diasSemana.length; i++) {
                         diasSeleccionados[i] = false;
@@ -244,6 +303,7 @@ public class AddRutinaActivity extends AppCompatActivity {
                 actualizarTextoDias();
             }
 
+            // Carga de la primera imagen como vista previa
             String fotos = cursor.getString(5);
             if (!TextUtils.isEmpty(fotos)) {
                 String[] rutas = fotos.split(",");
@@ -254,11 +314,14 @@ public class AddRutinaActivity extends AppCompatActivity {
         cursor.close();
     }
 
+    /**
+     * Copia una imagen seleccionada al almacenamiento interno de la aplicación
+     * y devuelve su ruta para almacenarla en la base de datos.
+     */
     private String guardarImagenInterna(Uri uri) {
         try {
             InputStream in = getContentResolver().openInputStream(uri);
-            File file = new File(getFilesDir(),
-                    "rutina_" + System.currentTimeMillis() + ".jpg");
+            File file = new File(getFilesDir(), "rutina_" + System.currentTimeMillis() + ".jpg");
             OutputStream out = new FileOutputStream(file);
 
             byte[] buffer = new byte[1024];
